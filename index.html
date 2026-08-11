@@ -447,8 +447,6 @@ function handleChoice(side, cards){
     c.classList.toggle('selected', c.dataset.side === side);
     c.classList.toggle('dimmed', c.dataset.side !== side);
   });
-  const statusRow = document.getElementById('status-row');
-
   const q = questionSet[current];
   const rtMs = Math.round(performance.now() - questionStartTime);
   const chosenBagId = side === 'left' ? q.bagIdLeft : q.bagIdRight;
@@ -470,11 +468,10 @@ function handleChoice(side, cards){
 
   const isLast = current === questionSet.length - 1;
   logResponse(entry); // fires in the background, doesn't block the UI
-  statusRow.textContent = 'Saved.';
   setTimeout(() => {
     current += 1;
     renderQuestion();
-  }, isLast ? 300 : 180);
+  }, isLast ? 120 : 60);
 }
 
 function renderEnd(){
