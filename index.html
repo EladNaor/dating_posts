@@ -432,7 +432,7 @@ function handleChoice(side, cards){
     c.classList.toggle('dimmed', c.dataset.side !== side);
   });
   const statusRow = document.getElementById('status-row');
-  statusRow.textContent = 'Saving...';
+  statusRow.textContent = 'Saving takes a few seconds. We appreciate your patience…';
 
   const q = questionSet[current];
   const rtMs = Math.round(performance.now() - questionStartTime);
