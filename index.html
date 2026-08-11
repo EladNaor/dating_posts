@@ -239,6 +239,12 @@ const responses = [];
 let current = 0;
 let questionStartTime = null;
 
+// Prefetch: fire the checkout request the moment the page loads, so the
+// network round-trip overlaps with the time it takes the participant to
+// read consent + instructions + type their ID, instead of happening after.
+// By the time they click Start this is usually already resolved.
+const checkoutPromise = checkoutFromBag(CONFIG.N_QUESTIONS * 2);
+
 /* ============================================================
    Logging
    ============================================================ */
@@ -374,7 +380,7 @@ function renderIntro(){
     startBtn.textContent = 'Loading…';
     error.textContent = '';
     try {
-      const posts = await checkoutFromBag(CONFIG.N_QUESTIONS * 2);
+      const posts = await checkoutPromise;
       if (posts.length < 2){
         error.textContent = 'Could not load posts right now. Please try again in a moment.';
         startBtn.disabled = false;
