@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Which post signals it more?</title>
+<title>Which one is getting married?</title>
 <style>
   :root{
     --paper:#eef1ec;
@@ -244,13 +244,29 @@ let questionStartTime = null;
    ============================================================ */
 function logResponse(entry){
   responses.push(entry);
-  if (!CONFIG.APPS_SCRIPT_URL) return Promise.resolve();
-  return fetch(CONFIG.APPS_SCRIPT_URL, {
+  if (!CONFIG.APPS_SCRIPT_URL) return;
+
+  const payload = JSON.stringify(entry);
+
+  // sendBeacon fires the request in the background without blocking the UI,
+  // and is specifically designed to still deliver even if the page navigates
+  // away right after — much better fit here than awaiting a fetch, since
+  // Apps Script itself commonly takes 1-3s per call and we don't want the
+  // participant staring at "Saving..." for that whole round trip.
+  if (navigator.sendBeacon){
+    const blob = new Blob([payload], { type: 'text/plain;charset=utf-8' });
+    const ok = navigator.sendBeacon(CONFIG.APPS_SCRIPT_URL, blob);
+    if (ok) return;
+    // fall through to fetch if the beacon couldn't be queued (e.g. payload too large)
+  }
+
+  fetch(CONFIG.APPS_SCRIPT_URL, {
     method: 'POST',
-    mode: 'no-cors', // Apps Script web apps don't return CORS headers for simple POSTs
+    mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(entry),
-  }).catch(() => { /* best-effort; keep going even if a beacon fails */ });
+    body: payload,
+    keepalive: true, // lets the request outlive a page navigation, similar spirit to sendBeacon
+  }).catch(() => { /* best-effort; keep going even if logging fails */ });
 }
 
 /* ============================================================
@@ -432,7 +448,6 @@ function handleChoice(side, cards){
     c.classList.toggle('dimmed', c.dataset.side !== side);
   });
   const statusRow = document.getElementById('status-row');
-  statusRow.textContent = 'Saving takes a few seconds. We appreciate your patience…';
 
   const q = questionSet[current];
   const rtMs = Math.round(performance.now() - questionStartTime);
@@ -454,13 +469,12 @@ function handleChoice(side, cards){
   };
 
   const isLast = current === questionSet.length - 1;
-  logResponse(entry).finally(() => {
-    statusRow.textContent = isLast ? 'Saved. Finishing up…' : 'Saved.';
-    setTimeout(() => {
-      current += 1;
-      renderQuestion();
-    }, isLast ? 500 : 260);
-  });
+  logResponse(entry); // fires in the background, doesn't block the UI
+  statusRow.textContent = 'Saved.';
+  setTimeout(() => {
+    current += 1;
+    renderQuestion();
+  }, isLast ? 300 : 180);
 }
 
 function renderEnd(){
