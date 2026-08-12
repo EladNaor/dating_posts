@@ -157,7 +157,7 @@ const CONFIG = {
 
   // Prolific's completion URL, given to you when you publish the study.
   // Leave blank to just show a thank-you screen instead of redirecting.
-  PROLIFIC_COMPLETION_URL: "",
+  COMPLETION_URL: "https://connect.cloudresearch.com/participant/project/622A3536CF/complete",
 
   N_QUESTIONS: 10,
   BAG_SIZE: 50,        // must match the number of posts embedded below
@@ -481,14 +481,14 @@ function handleChoice(side, cards){
 }
 
 function renderEnd(){
-  const redirect = CONFIG.PROLIFIC_COMPLETION_URL;
+  const redirect = CONFIG.COMPLETION_URL;
   app.innerHTML = `
     <div class="panel" style="text-align:center;">
       <div class="end-icon">✓</div>
       <h1 style="text-align:center;">Thank you!</h1>
       <p>Your responses have been recorded. That's everything for this task.</p>
       ${redirect
-        ? '<button class="btn" id="continue-btn">Continue</button>'
+        ? `<a class="btn" id="continue-btn" href="${redirect}" style="text-decoration:none; display:inline-block;">Continue</a>`
         : '<p class="fine-print">A link back to the study platform will be added here before this goes live &mdash; for now you can just close this tab.</p>'}
       ${!CONFIG.APPS_SCRIPT_URL
         ? '<p class="fine-print">Preview mode: APPS_SCRIPT_URL is not configured, so nothing was actually saved. Responses collected this session are logged to the browser console.</p>'
@@ -497,11 +497,6 @@ function renderEnd(){
   `;
   if (!CONFIG.APPS_SCRIPT_URL){
     console.log('Session responses (preview mode):', responses);
-  }
-  if (redirect){
-    document.getElementById('continue-btn').addEventListener('click', () => {
-      window.location.href = redirect;
-    });
   }
 }
 
